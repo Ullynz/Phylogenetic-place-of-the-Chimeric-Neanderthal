@@ -2,24 +2,14 @@
 
 import subprocess
 
-from config import PROJ_PATH
-from support_functions import check_file, mkdir
+from config import MSA_MATRIX_PATH, TREES_NUM, TREE_PATH
+from support_functions import mkdir
 
-def run_iqtree(MSA_matrix):
-    tree_dir = f"{PROJ_PATH}/trees"
-    mkdir(tree_dir)
+def run_iqtree():
+    mkdir(TREE_PATH)
 
-    # В файле num.txt храню индекс последнего построенного дерева, потом использую это число в префиксе для выходных файлов iqtree
-    tree_num_file = f"{tree_dir}/num.txt"
-    if not check_file(tree_num_file):
-        with open(tree_num_file, "w") as f:
-            f.write("0")
-    
-    with open(tree_num_file, 'r') as f:
-        nxt_num = int(f.read()) + 1
-    
-    with open(tree_num_file, "w") as f:
-        f.write(str(nxt_num))
+    for cnt in range(TREES_NUM):
+        matrix_fasta = f"{MSA_MATRIX_PATH}/matrix_{cnt}.fasta"
 
-    cmd = f"iqtree2 -s {MSA_matrix} -pre {tree_dir}/FinalTree_{nxt_num} -B 1000 -T 8 -mem 8G"
-    subprocess.run(cmd, shell=True)
+        cmd = f"iqtree2 -s {matrix_fasta} -pre {TREE_PATH}/Tree_{cnt} -B 1000 --scfl 100 -m MFP+ASC -T 8 -mem 8G"
+        subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

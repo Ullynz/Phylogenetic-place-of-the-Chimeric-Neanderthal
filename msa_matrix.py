@@ -4,10 +4,8 @@ import sys
 import pandas as pd
 from collections import defaultdict
 
-from config import PROJ_PATH
-from support_functions import check_file
-
-MSA_MATRIX_FASTA = f"{PROJ_PATH}/msa_matrix.fasta"
+from config import PROJ_PATH, MSA_MATRIX_PATH, TREES_NUM, WINDOW_SIZE
+from support_functions import check_file, mkdir
 
 # Удаление не биаллельных колонок из матрицы
 def delete_bad_columns(matrix, populations):
@@ -28,8 +26,8 @@ def delete_bad_columns(matrix, populations):
 
     return matrix
 
-# Строим MSA матрицу. Места пропусков (т.е. места отсутствия снипов в какой-то из популяций на данной позиции)
-# заполяняю референсным алеллем.
+# Построение MSA матрицы. Места пропусков (т.е. места отсутствия снипов в какой-то из популяций на данной позиции)
+# заполяняются референсным алеллем.
 def form_msa_matrix(populations):
     pop_A = populations[0]
     pop_B = populations[1]
@@ -38,7 +36,6 @@ def form_msa_matrix(populations):
     ordered_matrix = defaultdict(dict)
     ordered_matrix_str = {}
 
-    # Заполняю всю матрицу референсными аллелями
     for population in populations:
         chimeric_genome = f"{PROJ_PATH}/{population}/{pop_A}.{pop_B}_chimeric_genome.tsv"
 
@@ -56,7 +53,6 @@ def form_msa_matrix(populations):
             for population_ in populations:
                 matrix[population_][(chrom, pos)] = ref
     
-    # Заменяю в матрице референсные аллели на снипы, где они есть
     for population in populations:
         chimeric_genome = f"{PROJ_PATH}/{population}/{pop_A}.{pop_B}_chimeric_genome.tsv"
         df = pd.read_csv(chimeric_genome, sep='\t')
@@ -72,12 +68,24 @@ def form_msa_matrix(populations):
     
     ordered_matrix = delete_bad_columns(ordered_matrix, populations)
 
-    # Перевожу в fasta формат
     for population in populations:
         ordered_matrix_str[population] = "".join(ordered_matrix[population].values())
+
+    mkdir(MSA_MATRIX_PATH)
+
+    matrix_len = len(ordered_matrix_str[populations[0]])
+    block_size = int(matrix_len / TREES_NUM) + 1
     
-    out_fasta = MSA_MATRIX_FASTA
-    with open(out_fasta, "w") as f:
-        for population in populations:
-            f.write(f">{population} chimeric genome\n")
-            f.write(f"{ordered_matrix_str[population]}\n")
+    for cnt in range(TREES_NUM):
+        out_fasta = f"{MSA_MATRIX_PATH}/matrix_{cnt}.fasta"
+        with open(out_fasta, "w") as f:
+            for population in populations:
+                f.write(f">{population} chimeric genome\n")
+
+                start = cnt * block_size
+                end = min((cnt + 1) * block_size, matrix_len)
+                
+                if WINDOW_SIZE > 0:
+                    end = min(end, start + WINDOW_SIZE)
+
+                f.write(f"{ordered_matrix_str[population][start:end]}\n")
