@@ -1,4 +1,6 @@
 Запуск пайплайна 
 ```
-python3 main.py population_A population_B
+python3 main.py
 ```
+
+Детальная информация насчет запуска и необходимых для него путей на данный момент находится в config.py
