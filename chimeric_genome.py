@@ -8,7 +8,7 @@ import pysam
 from config import PROJ_PATH
 from support_functions import rnd, check_file
 
-# Формируем химерный геном для современных популяций в участках неандертальской интрогрессии,
+# Формирование химерного генома для современных популяций в участках неандертальской интрогрессии,
 # используя гаплотип индивида с самым длинным архаичным участком, покрывающим очередной снип.
 def form_modern_chimeric_genome(population, pop_A, pop_B, get_daiseg_output):
     chimeric_genome_file = f"{PROJ_PATH}/{population}/{pop_A}.{pop_B}_chimeric_genome.tsv"

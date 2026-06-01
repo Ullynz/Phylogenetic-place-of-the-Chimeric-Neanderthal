@@ -6,41 +6,42 @@ from config import PROJ_PATH, OUTGROUP, ARCHAIC_SECTIONS_PATH
 from config import DAISEG_POP_A_JSON, DAISEG_POP_B_JSON, DAISEG_POP_A_PATH, DAISEG_POP_B_PATH
 from config import get_modern_pop_vcf, get_altai_vcf, get_vindija_vcf, get_outgroup_vcf
 from support_functions import check_file, mkdir
-from masks import merge_archaic_sections, intersect_archaic_sections
+from masks import intersect_archaic_sections
 
 # Фильтр vcf современных популяций для конкретной хромосомы по сэмплам и маске
 def modern_pop_filter(population, population_vcf, population_filtered_vcf, mask, samples, chrom):
     temp_vcf = f"{PROJ_PATH}/temp.vcf.gz"
 
-    if not check_file(population_filtered_vcf):
-        print(f"Filtering vcf for {population} chr{chrom}...")
+    if check_file(population_filtered_vcf):
+        return
 
-        cmd = f"bcftools view -S {samples} -R {mask} --types snps {population_vcf} -Oz -o {temp_vcf}"
-        subprocess.run(cmd, shell=True)
+    print(f"Filtering vcf for {population} chr{chrom}...")
 
-        cmd = f"bcftools +fill-tags {temp_vcf} -Oz -o {population_filtered_vcf}"
-        subprocess.run(cmd, shell=True)
+    cmd = f"bcftools view -R {mask} -S {samples} --types snps {population_vcf} -Oz -o {temp_vcf}"
+    subprocess.run(cmd, shell=True)
 
-        cmd = f"bcftools index {population_filtered_vcf}"
-        subprocess.run(cmd, shell=True)
+    cmd = f"bcftools +fill-tags {temp_vcf} -Oz -o {population_filtered_vcf}"
+    subprocess.run(cmd, shell=True)
 
-        print("Done!")
+    cmd = f"bcftools index {population_filtered_vcf}"
+    subprocess.run(cmd, shell=True)
+
+    print("Done!")
 
 # Фильтр vcf архаичных популяций для конкретной хромосомы по маске сразу с отбрасыванием генотипа 0/0
 def archaic_pop_filter(population, population_vcf, population_filtered_vcf, mask, chrom):
-    if not check_file(population_filtered_vcf):
-        print(f"Filtering vcf for {population} chr{chrom}...")
+    if check_file(population_filtered_vcf):
+        return
+    
+    print(f"Filtering vcf for {population} chr{chrom}...")
 
-        cmd = f"""
-        bcftools view -R {mask} --types snps {population_vcf} |
-        bcftools view -e 'GT="0/0"' -Oz -o {population_filtered_vcf}
-        """
-        subprocess.run(cmd, shell=True)
+    cmd = f"bcftools view -R {mask} --types snps -e 'GT=\"0/0\"' {population_vcf} -Oz -o {population_filtered_vcf}"
+    subprocess.run(cmd, shell=True)
 
-        cmd = f"bcftools index {population_filtered_vcf}"
-        subprocess.run(cmd, shell=True)
+    cmd = f"bcftools index {population_filtered_vcf}"
+    subprocess.run(cmd, shell=True)
 
-        print("Done!")
+    print("Done!")
 
 # Путь к отфильтрованным по архаичным сегментам vcf
 def get_filtered_vcf(population_path, pop_A, pop_B, chrom):

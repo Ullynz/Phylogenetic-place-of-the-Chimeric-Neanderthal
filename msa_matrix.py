@@ -1,11 +1,10 @@
 # Построение MSA матрицы
 
-import sys
 import pandas as pd
 from collections import defaultdict
 
 from config import PROJ_PATH, MSA_MATRIX_PATH, TREES_NUM, WINDOW_SIZE
-from support_functions import check_file, mkdir
+from support_functions import mkdir
 
 # Удаление не биаллельных колонок из матрицы
 def delete_bad_columns(matrix, populations):
@@ -26,8 +25,7 @@ def delete_bad_columns(matrix, populations):
 
     return matrix
 
-# Построение MSA матрицы. Места пропусков (т.е. места отсутствия снипов в какой-то из популяций на данной позиции)
-# заполяняются референсным алеллем.
+# Построение MSA матрицы
 def form_msa_matrix(populations):
     pop_A = populations[0]
     pop_B = populations[1]
@@ -38,11 +36,6 @@ def form_msa_matrix(populations):
 
     for population in populations:
         chimeric_genome = f"{PROJ_PATH}/{population}/{pop_A}.{pop_B}_chimeric_genome.tsv"
-
-        if not check_file(chimeric_genome):
-            print(f"Chimeric genome for population {population} was not found")
-            sys.exit(1)
-
         df = pd.read_csv(chimeric_genome, sep='\t')
 
         for i in range(df.shape[0]):
@@ -89,3 +82,5 @@ def form_msa_matrix(populations):
                     end = min(end, start + WINDOW_SIZE)
 
                 f.write(f"{ordered_matrix_str[population][start:end]}\n")
+    
+    return ordered_matrix_str

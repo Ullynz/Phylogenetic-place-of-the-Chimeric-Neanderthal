@@ -15,9 +15,18 @@ def get_daiseg_pop_A_output(chrom):
 def get_daiseg_pop_B_output(chrom):
     return f"{DAISEG_POP_B_PATH}/IBS.YRI.grch37.chr{chrom}.em.tsv"
 
-# Путь к coverage
+# Пути к coverage
 def get_daiseg_coverage(daiseg_pop_path, chrom):
     return f"{daiseg_pop_path}/coverage_1kG.chr{chrom}.grch37.bed"
+
+def get_altai_coverage(chrom):
+    return f"/home/share/human.data/neand/altai/bed/chr{chrom}_mask.bed.gz"
+
+def get_vindija_coverage(chrom):
+    return f"/home/share/human.data/neand/33.19/bed/chr{chrom}_mask.bed.gz"
+
+def get_outgroup_coverage(chrom):
+    return f"/home/usnasonova/project/Ust/masks/chr{chrom}.Map35_99.MQ30.Cov.indels.TRF.bed.gz"
 
 # Путь к фильтрованным после DAIseg vcf 
 def get_modern_pop_vcf(daiseg_pop_path, chrom):
@@ -56,7 +65,7 @@ MSA_MATRIX_PATH = f"{PROJ_PATH}/matrix"
 TREE_PATH = f"{PROJ_PATH}/trees"
 
 # Число локальных деревьев
-TREES_NUM = 1
+TREES_NUM = 40
 
 # Размер окон, по которым строятся деревья (-1, если нужен максимальный, чтобы TREE_NUM деревьев покрывали все позиции)
 WINDOW_SIZE = -1
