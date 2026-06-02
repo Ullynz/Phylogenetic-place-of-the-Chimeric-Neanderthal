@@ -49,6 +49,7 @@
 - `get_vindija_vcf(chrom)`: геном Vindija
 - `get_altai_vcf(chrom)`: геном Altai
 - `get_outgroup_vcf(chrom)`: геном outgroup-ы
+- `get_yri_vcf(chrom)`: геном YRI (например, 1000GP)
 
 ## Использование
 Для запуска пайплайна сперва необходимо для каждой из рассматриваемых современных популяций запустить [`DAIseg`](https://github.com/Genomics-HSE/DAIseg.git). Также нам потребуются геномные данные (vcf и coverage-маски) для outgroup-ы - если ранее они не были использованы для `DAIseg`, их необходимо предварительно скачать.
