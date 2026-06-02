@@ -4,28 +4,8 @@ import pandas as pd
 from collections import defaultdict
 
 from config import PROJ_PATH, MSA_MATRIX_PATH, TREES_NUM, WINDOW_SIZE
-from support_functions import mkdir
+from support_functions import mkdir, delete_bad_columns
 
-# Удаление не биаллельных колонок из матрицы
-def delete_bad_columns(matrix, populations):
-    bad_columns = []
-
-    for pos in matrix[populations[0]]:
-        variants = {}
-
-        for population in populations:
-            variants[matrix[population][pos]] = True
-
-        if len(variants) != 2:
-            bad_columns.append(pos)
-    
-    for population in populations:
-        for col in bad_columns:
-            del matrix[population][col]
-
-    return matrix
-
-# Построение MSA матрицы
 def form_msa_matrix(populations):
     pop_A = populations[0]
     pop_B = populations[1]
@@ -33,8 +13,9 @@ def form_msa_matrix(populations):
     matrix = defaultdict(dict)
     ordered_matrix = defaultdict(dict)
     ordered_matrix_str = {}
+    filtered_ordered_matrix_str = {}
 
-    for population in populations:
+    for population in populations + ["YRI"]:
         chimeric_genome = f"{PROJ_PATH}/{population}/{pop_A}.{pop_B}_chimeric_genome.tsv"
         df = pd.read_csv(chimeric_genome, sep='\t')
 
@@ -43,10 +24,10 @@ def form_msa_matrix(populations):
             chrom = df.iloc[i]["CHROM"]
             pos = df.iloc[i]["POS"]
 
-            for population_ in populations:
+            for population_ in populations + ["YRI"]:
                 matrix[population_][(chrom, pos)] = ref
     
-    for population in populations:
+    for population in populations + ["YRI"]:
         chimeric_genome = f"{PROJ_PATH}/{population}/{pop_A}.{pop_B}_chimeric_genome.tsv"
         df = pd.read_csv(chimeric_genome, sep='\t')
 
@@ -58,15 +39,15 @@ def form_msa_matrix(populations):
             matrix[population][(chrom, pos)] = chimeric_allele
 
         ordered_matrix[population] = dict(sorted(matrix[population].items()))
-    
-    ordered_matrix = delete_bad_columns(ordered_matrix, populations)
 
-    for population in populations:
+    for population in populations + ["YRI"]:
         ordered_matrix_str[population] = "".join(ordered_matrix[population].values())
+    
+    filtered_ordered_matrix_str = delete_bad_columns(ordered_matrix_str, populations)
 
     mkdir(MSA_MATRIX_PATH)
 
-    matrix_len = len(ordered_matrix_str[populations[0]])
+    matrix_len = len(filtered_ordered_matrix_str[populations[0]])
     block_size = int(matrix_len / TREES_NUM) + 1
     
     for cnt in range(TREES_NUM):
@@ -81,6 +62,6 @@ def form_msa_matrix(populations):
                 if WINDOW_SIZE > 0:
                     end = min(end, start + WINDOW_SIZE)
 
-                f.write(f"{ordered_matrix_str[population][start:end]}\n")
+                f.write(f"{filtered_ordered_matrix_str[population][start:end]}\n")
     
     return ordered_matrix_str

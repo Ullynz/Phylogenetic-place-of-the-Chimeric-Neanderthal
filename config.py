@@ -44,6 +44,10 @@ def get_altai_vcf(chrom):
 def get_outgroup_vcf(chrom):
     return f"/home/usnasonova/project/Ust/Ust_Ishim.hg19_1000g.{chrom}.mod.vcf.gz"
 
+# Путь, откуда можно достать геном YRI (например, 1000 Genomes)
+def get_yri_vcf(chrom):
+    return f"/home/share/human.data/1000GP/1000GP.grch37/ALL.chr{chrom}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz"
+
 
 # Параметры самого пайплайна:
 
@@ -65,7 +69,7 @@ MSA_MATRIX_PATH = f"{PROJ_PATH}/matrix"
 TREE_PATH = f"{PROJ_PATH}/trees"
 
 # Число локальных деревьев
-TREES_NUM = 40
+TREES_NUM = 100
 
 # Размер окон, по которым строятся деревья (-1, если нужен максимальный, чтобы TREE_NUM деревьев покрывали все позиции)
 WINDOW_SIZE = -1

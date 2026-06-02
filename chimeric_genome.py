@@ -93,3 +93,28 @@ def form_neand_chimeric_genome(population, pop_A, pop_B):
                     writer.writerow([population, rec.chrom, rec.pos, rec.alts[0], rec.ref])
     
     print(f"Chimeric genome was formed successfully! {total_snp} snp were added\n")
+
+# Формирование гаплоидного генома для YRI путем выбора мажорных алеллей
+def form_yri_genome(pop_A, pop_B):
+    haploid_genome_file = f"{PROJ_PATH}/YRI/{pop_A}.{pop_B}_chimeric_genome.tsv"
+
+    if check_file(haploid_genome_file):
+        print("Haploid genome for population YRI has already been built!\n")
+        return
+    
+    with open(haploid_genome_file, "w", newline='') as f:
+        writer = csv.writer(f, delimiter='\t')
+        writer.writerow(["POP", "CHROM", "POS", "CHIMERIC_ALLELE", "REF_ALLELE"])
+    
+    for chrom in range(1, 23):
+        vcf_name = f"{pop_A}.{pop_B}.filtered_chrom{chrom}.vcf.gz"
+        vcf_file = f"{PROJ_PATH}/YRI/{vcf_name}"
+
+        vcf_data = pysam.VariantFile(vcf_file)
+        with open(haploid_genome_file, "a", newline='') as f:
+            writer = csv.writer(f, delimiter='\t')
+
+            for rec in vcf_data:
+                AF = rec.info["AF"][0]
+                if AF > 0.5 and len(rec.alts[0]) == 1:
+                    writer.writerow(["YRI", rec.chrom, rec.pos, rec.alts[0], rec.ref])

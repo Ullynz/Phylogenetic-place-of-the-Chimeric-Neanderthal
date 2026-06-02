@@ -19,7 +19,7 @@ def make_archaic_mask(population, daiseg_path, get_daiseg_output):
         mask = f"{PROJ_POP_PATH}/archaic_masks/mask_chr{chrom}.bed"
 
         if check_file(mask):
-            return
+            continue
 
         print(f"Forming mask for {population} chrom {chrom}...")
 
@@ -51,7 +51,7 @@ def intersect_neand_masks():
         intersected_masks = f"{ARCHAIC_SECTIONS_PATH}/neand_mask_chr{chrom}.bed"
 
         if check_file(intersected_masks):
-            return
+            continue
         
         print(f"Intersecting neand coverage masks for chr{chrom}...")
 
@@ -85,19 +85,21 @@ def intersect_archaic_sections(pop_A, pop_B):
 
         intersected_sections = f"{ARCHAIC_SECTIONS_PATH}/{pop_A}.{pop_B}.chr{chrom}.bed"
 
-        if not check_file(intersected_sections):
-            print(f"Intersecting archaic sections of {pop_A} and {pop_B} chr{chrom}...")
+        if check_file(intersected_sections):
+            continue
+        
+        print(f"Intersecting archaic sections of {pop_A} and {pop_B} chr{chrom}...")
 
-            cmd = f"bedtools intersect -a {mask_A} -b {mask_B} > {temp}"
-            subprocess.run(cmd, shell=True)
+        cmd = f"bedtools intersect -a {mask_A} -b {mask_B} > {temp}"
+        subprocess.run(cmd, shell=True)
 
-            cmd = f"bedtools intersect -a {temp} -b {neand_mask} > {temp2}"
-            subprocess.run(cmd, shell=True)
+        cmd = f"bedtools intersect -a {temp} -b {neand_mask} > {temp2}"
+        subprocess.run(cmd, shell=True)
 
-            cmd = f"bedtools intersect -a {temp2} -b {outgroup_mask} > {temp}"
-            subprocess.run(cmd, shell=True)
+        cmd = f"bedtools intersect -a {temp2} -b {outgroup_mask} > {temp}"
+        subprocess.run(cmd, shell=True)
 
-            cmd = f"sort -k1,1 -k2,2n {temp} | bedtools merge > {intersected_sections}"
-            subprocess.run(cmd, shell=True)
+        cmd = f"sort -k1,1 -k2,2n {temp} | bedtools merge > {intersected_sections}"
+        subprocess.run(cmd, shell=True)
 
-            print("Done!")
+        print("Done!")
