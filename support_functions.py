@@ -3,6 +3,7 @@
 from pathlib import Path
 import random
 import numpy as np
+from collections import defaultdict
 
 def rnd():
     return int(random.random() >= 0.5)
@@ -11,6 +12,10 @@ def divide(a, b):
     if b == 0:
         return 0
     return a / b
+
+def list_to_string(lst):
+    str = ".".join(obj for obj in lst)
+    return str
 
 # Работа с путями
 def check_file(file_name):
@@ -40,7 +45,7 @@ def delete_bad_columns(matrix, populations):
     for population in populations:
         result[population] = "".join(matrix[population][pos] for pos in good_columns)
 
-    return result
+    return result, good_columns
 
 # Кодирование аллелей в 0/1
 def code(allele, outgroup_allele):
@@ -51,11 +56,12 @@ def code(allele, outgroup_allele):
 # Статистики
 def get_D_stat(matrix, population, start=0, end=None):
     if end is None:
-        filtered_matrix = delete_bad_columns(matrix, [population, "Altai", "Vindija", "YRI"])
+        filtered_matrix, pos_idx = delete_bad_columns(matrix, [population, "Altai", "Vindija", "YRI"])
         end = len(filtered_matrix[population])
 
     else:
         filtered_matrix = matrix
+        pos_idx = None
 
     end = min(end, len(filtered_matrix[population]))
 
@@ -76,9 +82,9 @@ def get_D_stat(matrix, population, start=0, end=None):
         denom += abs(value)
     
     D_stat = divide(numer, denom)
-    return numer, denom, D_stat, filtered_matrix
+    return numer, denom, D_stat, filtered_matrix, pos_idx
 
-def get_Z_score(matrix, population, numer, denom, D_stat):
+def get_Z_score_snp_blocks(matrix, population, numer, denom, D_stat):
     block_sz = 1250
     block_cnt = int((len(matrix[population]) - 1) / block_sz) + 1
 
@@ -88,7 +94,7 @@ def get_Z_score(matrix, population, numer, denom, D_stat):
         start = block * block_sz
         end = (block + 1) * block_sz
 
-        local_numer, local_denom, _, _ = get_D_stat(matrix, population, start, end)
+        local_numer, local_denom, _, _, _ = get_D_stat(matrix, population, start, end)
         trunc_stat = divide(numer - local_numer, denom - local_denom)
         d_stats.append(trunc_stat)
 
@@ -100,3 +106,27 @@ def get_Z_score(matrix, population, numer, denom, D_stat):
 
     return Z_score
 
+def get_Z_score_physical_blocks(matrix, population, numer, denom, D_stat, pos, pos_idx):
+    block_sz = 5e6
+    blocks = defaultdict(list)
+
+    for idx in pos_idx:
+        blocks[(pos[idx][0], int(pos[idx][1] / block_sz))].append(idx)
+    
+    d_stats = []
+    
+    for block in blocks:
+        start = blocks[block][0]
+        end = blocks[block][-1] + 1
+        
+        local_numer, local_denom, _, _, _ = get_D_stat(matrix, population, start, end)
+        trunc_stat = divide(numer - local_numer, denom - local_denom)
+        d_stats.append(trunc_stat)
+    
+    d_stats = np.array(d_stats)
+    d_mean = np.mean(d_stats)
+
+    SE = np.sqrt((len(blocks) - 1) / len(blocks) * np.sum((d_stats - d_mean)**2))
+    Z_score = D_stat / SE
+
+    return Z_score

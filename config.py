@@ -1,23 +1,26 @@
 # Пути к файлам, необходимым для пайплайна:
 
 # Директории с результатами работы DAIseg
-DAISEG_POP_A_PATH = "/home/usnasonova/DAIseg/TSI.YRI"
-DAISEG_POP_B_PATH = "/home/usnasonova/DAIseg/IBS.YRI"
+DAISEG_PATHS = [
+    "/home/usnasonova/DAIseg/TSI.YRI",
+    "/home/usnasonova/DAIseg/IBS.YRI",
+    "/home/usnasonova/DAIseg/CHB"
+]
 
 # json-ы для DAIseg
-DAISEG_POP_A_JSON = "/home/usnasonova/DAIseg/TSI.YRI/jsons/TSI.YRI.grch37.chr21.json"
-DAISEG_POP_B_JSON = "/home/usnasonova/DAIseg/IBS.YRI/jsons/IBS.YRI.grch37.chr21.json"
+DAISEG_JSONS = [
+    "/home/usnasonova/DAIseg/TSI.YRI/jsons/TSI.YRI.grch37.chr21.json",
+    "/home/usnasonova/DAIseg/IBS.YRI/jsons/IBS.YRI.grch37.chr21.json",
+    ""
+]
 
 # Пути к output-ам DAIseg
-def get_daiseg_pop_A_output(chrom):
-    return f"{DAISEG_POP_A_PATH}/TSI.YRI.grch37.chr{chrom}.em.tsv"
-
-def get_daiseg_pop_B_output(chrom):
-    return f"{DAISEG_POP_B_PATH}/IBS.YRI.grch37.chr{chrom}.em.tsv"
+def get_daiseg_output(daiseg_path, population, chrom):
+    return f"{daiseg_path}/{population}.YRI.grch37.chr{chrom}.em.tsv"
 
 # Пути к coverage
-def get_daiseg_coverage(daiseg_pop_path, chrom):
-    return f"{daiseg_pop_path}/coverage_1kG.chr{chrom}.grch37.bed"
+def get_modern_coverage(chrom):
+    return f"/home/share/human.data/1000GP/1000GP.grch37/bed/chr{chrom}.renamed.bed"
 
 def get_altai_coverage(chrom):
     return f"/home/share/human.data/neand/altai/bed/chr{chrom}_mask.bed.gz"
@@ -27,26 +30,21 @@ def get_vindija_coverage(chrom):
 
 def get_outgroup_coverage(chrom):
     return f"/home/usnasonova/project/Ust/masks/chr{chrom}.Map35_99.MQ30.Cov.indels.TRF.bed.gz"
+    #return get_modern_coverage(chrom)
 
-# Путь к фильтрованным после DAIseg vcf 
-def get_modern_pop_vcf(daiseg_pop_path, chrom):
-    return f"{daiseg_pop_path}/1kG_filtered.chr{chrom}.grch37.vcf.gz"
+# Пути к vcf 
+def get_modern_pop_vcf(chrom):
+    return f"/home/share/human.data/1000GP/1000GP.grch37/ALL.chr{chrom}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz"
 
-# Геном Vindija
 def get_vindija_vcf(chrom):
     return f"/home/share/human.data/neand/33.19/chr{chrom}_mq25_mapab100.vcf.gz"
 
-# Геном Altai
 def get_altai_vcf(chrom):
     return f"/home/share/human.data/neand/altai/chr{chrom}_mq25_mapab100.vcf.gz"
 
-# Геном outgroup-ы
 def get_outgroup_vcf(chrom):
     return f"/home/usnasonova/project/Ust/Ust_Ishim.hg19_1000g.{chrom}.mod.vcf.gz"
-
-# Путь, откуда можно достать геном YRI (например, 1000 Genomes)
-def get_yri_vcf(chrom):
-    return f"/home/share/human.data/1000GP/1000GP.grch37/ALL.chr{chrom}.phase3_shapeit2_mvncall_integrated_v5b.20130502.genotypes.vcf.gz"
+    #return get_modern_pop_vcf(chrom)
 
 
 # Параметры самого пайплайна:
@@ -55,7 +53,7 @@ def get_yri_vcf(chrom):
 PROJ_PATH = "/home/usnasonova/project" 
 
 # Популяции
-MODERN_POP = ["TSI", "IBS"]
+MODERN_POP = ["TSI", "IBS", "CHB"]
 NEAND_POP = ["Vindija", "Altai"]
 OUTGROUP = "Ust"
 

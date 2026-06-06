@@ -5,13 +5,13 @@ import csv
 import pandas as pd
 import pysam
 
-from config import PROJ_PATH
-from support_functions import rnd, check_file
+from config import PROJ_PATH, MODERN_POP, get_daiseg_output
+from support_functions import rnd, check_file, list_to_string
 
 # Формирование химерного генома для современных популяций в участках неандертальской интрогрессии,
 # используя гаплотип индивида с самым длинным архаичным участком, покрывающим очередной снип.
-def form_modern_chimeric_genome(population, pop_A, pop_B, get_daiseg_output):
-    chimeric_genome_file = f"{PROJ_PATH}/{population}/{pop_A}.{pop_B}_chimeric_genome.tsv"
+def form_modern_chimeric_genome(population, daiseg_path):
+    chimeric_genome_file = f"{PROJ_PATH}/{population}/{list_to_string(MODERN_POP)}_chimeric_genome.tsv"
 
     if check_file(chimeric_genome_file):
         print(f"Chimeric genome for population {population} has already been built!\n")
@@ -26,7 +26,7 @@ def form_modern_chimeric_genome(population, pop_A, pop_B, get_daiseg_output):
     
     for chrom in range(1, 23):
         tree = IntervalTree()
-        daiseg_archaic_sections = get_daiseg_output(chrom)
+        daiseg_archaic_sections = get_daiseg_output(daiseg_path, population, chrom)
         df = pd.read_csv(daiseg_archaic_sections, sep='\t')
 
         for i in range(df.shape[0]):
@@ -36,7 +36,7 @@ def form_modern_chimeric_genome(population, pop_A, pop_B, get_daiseg_output):
             length = df.iloc[i]["Length"]
             tree.addi(start, end + 1, (length, sample))
 
-        vcf_name = f"{pop_A}.{pop_B}.filtered_chrom{chrom}.vcf.gz"
+        vcf_name = f"{list_to_string(MODERN_POP)}.filtered_chrom{chrom}.vcf.gz"
         vcf_file = f"{PROJ_PATH}/{population}/{vcf_name}"
 
         vcf_data = pysam.VariantFile(vcf_file)
@@ -68,8 +68,8 @@ def form_modern_chimeric_genome(population, pop_A, pop_B, get_daiseg_output):
     print(f"Chimeric genome was formed successfully! {total_snp} snp were added\n")
 
 # Формирование гаплоидного генома для неандертальцев и outgroup
-def form_neand_chimeric_genome(population, pop_A, pop_B):
-    chimeric_genome_file = f"{PROJ_PATH}/{population}/{pop_A}.{pop_B}_chimeric_genome.tsv"
+def form_neand_chimeric_genome(population):
+    chimeric_genome_file = f"{PROJ_PATH}/{population}/{list_to_string(MODERN_POP)}_chimeric_genome.tsv"
 
     total_snp = 0
 
@@ -78,7 +78,7 @@ def form_neand_chimeric_genome(population, pop_A, pop_B):
         writer.writerow(["POP", "CHROM", "POS", "CHIMERIC_ALLELE", "REF_ALLELE"])
     
     for chrom in range(1, 23):
-        vcf_name = f"{pop_A}.{pop_B}.filtered_chrom{chrom}.vcf.gz"
+        vcf_name = f"{list_to_string(MODERN_POP)}.filtered_chrom{chrom}.vcf.gz"
         vcf_file = f"{PROJ_PATH}/{population}/{vcf_name}"
 
         vcf_data = pysam.VariantFile(vcf_file)
@@ -95,8 +95,10 @@ def form_neand_chimeric_genome(population, pop_A, pop_B):
     print(f"Chimeric genome was formed successfully! {total_snp} snp were added\n")
 
 # Формирование гаплоидного генома для YRI путем выбора мажорных алеллей
-def form_yri_genome(pop_A, pop_B):
-    haploid_genome_file = f"{PROJ_PATH}/YRI/{pop_A}.{pop_B}_chimeric_genome.tsv"
+def form_yri_genome():
+    haploid_genome_file = f"{PROJ_PATH}/YRI/{list_to_string(MODERN_POP)}_chimeric_genome.tsv"
+
+    total_snp = 0
 
     if check_file(haploid_genome_file):
         print("Haploid genome for population YRI has already been built!\n")
@@ -107,7 +109,7 @@ def form_yri_genome(pop_A, pop_B):
         writer.writerow(["POP", "CHROM", "POS", "CHIMERIC_ALLELE", "REF_ALLELE"])
     
     for chrom in range(1, 23):
-        vcf_name = f"{pop_A}.{pop_B}.filtered_chrom{chrom}.vcf.gz"
+        vcf_name = f"{list_to_string(MODERN_POP)}.filtered_chrom{chrom}.vcf.gz"
         vcf_file = f"{PROJ_PATH}/YRI/{vcf_name}"
 
         vcf_data = pysam.VariantFile(vcf_file)
@@ -117,4 +119,7 @@ def form_yri_genome(pop_A, pop_B):
             for rec in vcf_data:
                 AF = rec.info["AF"][0]
                 if AF > 0.5 and len(rec.alts[0]) == 1:
+                    total_snp += 1
                     writer.writerow(["YRI", rec.chrom, rec.pos, rec.alts[0], rec.ref])
+
+    print(f"Haploid genome was formed successfully! {total_snp} snp were added\n")

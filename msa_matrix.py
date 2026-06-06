@@ -3,20 +3,17 @@
 import pandas as pd
 from collections import defaultdict
 
-from config import PROJ_PATH, MSA_MATRIX_PATH, TREES_NUM, WINDOW_SIZE
-from support_functions import mkdir, delete_bad_columns
+from config import PROJ_PATH, MODERN_POP, MSA_MATRIX_PATH, TREES_NUM, WINDOW_SIZE
+from support_functions import mkdir, delete_bad_columns, list_to_string
 
 def form_msa_matrix(populations):
-    pop_A = populations[0]
-    pop_B = populations[1]
-
     matrix = defaultdict(dict)
     ordered_matrix = defaultdict(dict)
     ordered_matrix_str = {}
     filtered_ordered_matrix_str = {}
 
     for population in populations + ["YRI"]:
-        chimeric_genome = f"{PROJ_PATH}/{population}/{pop_A}.{pop_B}_chimeric_genome.tsv"
+        chimeric_genome = f"{PROJ_PATH}/{population}/{list_to_string(MODERN_POP)}_chimeric_genome.tsv"
         df = pd.read_csv(chimeric_genome, sep='\t')
 
         for i in range(df.shape[0]):
@@ -28,7 +25,7 @@ def form_msa_matrix(populations):
                 matrix[population_][(chrom, pos)] = ref
     
     for population in populations + ["YRI"]:
-        chimeric_genome = f"{PROJ_PATH}/{population}/{pop_A}.{pop_B}_chimeric_genome.tsv"
+        chimeric_genome = f"{PROJ_PATH}/{population}/{list_to_string(MODERN_POP)}_chimeric_genome.tsv"
         df = pd.read_csv(chimeric_genome, sep='\t')
 
         for i in range(df.shape[0]):
@@ -43,7 +40,7 @@ def form_msa_matrix(populations):
     for population in populations + ["YRI"]:
         ordered_matrix_str[population] = "".join(ordered_matrix[population].values())
     
-    filtered_ordered_matrix_str = delete_bad_columns(ordered_matrix_str, populations)
+    filtered_ordered_matrix_str, _ = delete_bad_columns(ordered_matrix_str, populations)
 
     mkdir(MSA_MATRIX_PATH)
 
@@ -64,4 +61,4 @@ def form_msa_matrix(populations):
 
                 f.write(f"{filtered_ordered_matrix_str[population][start:end]}\n")
     
-    return ordered_matrix_str
+    return ordered_matrix_str, list(ordered_matrix[populations[0]].keys())

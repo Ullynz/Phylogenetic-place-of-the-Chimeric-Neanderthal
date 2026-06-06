@@ -16,12 +16,13 @@ def check_topology(trees):
         is_unique = True
 
         for topology in topologies_found:
-            compare = tree.compare(topology, unrooted=True)
+            compare = tree.compare(topology, unrooted=False)
             rf = compare["rf"]
 
             if rf == 0:
                 topologies_found[topology] += 1
                 is_unique = False
+                break
         
         if is_unique:
             topologies_found[tree] = 1
@@ -29,10 +30,12 @@ def check_topology(trees):
     print(f"Different topologies among local trees: {len(topologies_found)}")
     print("Details:")
 
+    topologies_found = dict(sorted(topologies_found.items(), key=lambda x: x[1], reverse=True))
+
     for topology in topologies_found:
         percentage = topologies_found[topology] * 100 / TREES_NUM
 
-        print(f"{topology} - {topologies_found[topology]} trees ({percentage}%)")
+        print(f"{topology.write(format=9)} - {topologies_found[topology]} trees ({percentage}%)")
 
 # Построение консенсусного дерева
 def build_majority_tree(trees):
@@ -60,7 +63,11 @@ def run_iqtree():
         treefile = f"{TREE_PATH}/Tree_{cnt}.treefile"
 
         trees_phylo.append(Phylo.read(treefile, "newick"))
-        trees_ete3.append(Tree(treefile))
+
+        Tree_treefile = Tree(treefile)
+        outgroup = Tree_treefile.search_nodes(name=OUTGROUP)
+        Tree_treefile.set_outgroup(outgroup[0])
+        trees_ete3.append(Tree_treefile)
     
     build_majority_tree(trees_phylo)
     check_topology(trees_ete3)
